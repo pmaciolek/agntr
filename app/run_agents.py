@@ -19,12 +19,9 @@ async def main():
     # Start all agents concurrently
     task_bob = asyncio.create_task(bob.start())
     task_alice = asyncio.create_task(alice.start())
-    
-    # Coordinator starts the communication
-    initial_topic = "Topic of the day: Should we use Redis for everything?"
-    task_coord = asyncio.create_task(coordinator.start_conversation(initial_topic))
+    task_coord = asyncio.create_task(coordinator.start())
 
-    print("Agents are running... Waiting for them to finish (or STOP_SYSTEM).")
+    print("Agents are running... Waiting for user input from Web UI (or STOP_SYSTEM).")
     await asyncio.gather(task_bob, task_alice, task_coord)
     print("Simulation finished.")
 
