@@ -49,6 +49,13 @@ export OPENROUTER_API_KEY="your_openrouter_api_key_here"
 uv run python app/run_agents.py
 ```
 
+#### Run with WildEdge Instrumentation (Optional)
+If you want to monitor the agent instances with [WildEdge](https://github.com/wildedge/wildedge-python), prefix the command with `wildedge run`:
+```bash
+export WILDEDGE_DSN="https://<secret>@ingest.wildedge.dev/<key>"
+uv run wildedge run -- python app/run_agents.py
+```
+
 ## Adding New Agents
 
 1. Create a `[name].md` file in the `agents/` directory containing the agent's persona prompt.

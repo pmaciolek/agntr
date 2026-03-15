@@ -10,4 +10,8 @@ dependencies = [
     "pydantic>=2.12.5",
     "redis>=7.3.0",
     "uvicorn[standard]>=0.41.0",
+    "wildedge-sdk",
 ]
+
+[tool.uv.sources]
+wildedge-sdk = { path = "../wildedge-python" }
