@@ -578,6 +578,7 @@ source = { directory = "../wildedge-python" }
 dev = [
     { name = "coverage" },
     { name = "pytest", specifier = ">=9.0.2" },
+    { name = "pytest-asyncio", specifier = ">=0.25" },
     { name = "pytest-mock", specifier = ">=3.15.1" },
     { name = "ruff", specifier = ">=0.15.4" },
     { name = "tox" },

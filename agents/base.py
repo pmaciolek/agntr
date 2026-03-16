@@ -5,17 +5,6 @@ import json
 import redis.asyncio as redis
 from openai import AsyncOpenAI
 
-try:
-    import wildedge
-    we_dsn = os.getenv("WILDEDGE_DSN")
-    if we_dsn:
-        wildedge_client = wildedge.WildEdge(dsn=we_dsn)
-        logger_setup = True
-    else:
-        wildedge_client = None
-except ImportError:
-    wildedge_client = None
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -38,16 +27,6 @@ class RedisOpenRouterAgent:
             base_url="https://openrouter.ai/api/v1",
             api_key=api_key,
         )
-        
-        if wildedge_client:
-            self.we_handle = wildedge_client.register_model(
-                self.client,
-                model_id=self.model,
-                source="openrouter",
-                auto_instrument=False
-            )
-        else:
-            self.we_handle = None
         
         self.redis = None
         self.pubsub = None
@@ -89,17 +68,10 @@ class RedisOpenRouterAgent:
         self.history.append({"role": "user", "content": message})
         
         try:
-            if self.we_handle:
-                with wildedge.track(self.we_handle):
-                    response = await self.client.chat.completions.create(
-                        model=self.model,
-                        messages=self.history
-                    )
-            else:
-                response = await self.client.chat.completions.create(
-                    model=self.model,
-                    messages=self.history
-                )
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=self.history
+            )
             reply = response.choices[0].message.content
             
             logger.info(f"Agent {self.name} responding: {reply}")

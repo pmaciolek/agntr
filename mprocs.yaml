@@ -1,0 +1,6 @@
+procs:
+  web:
+    cmd: uvicorn app.main:app --reload
+
+  agents:
+    cmd: wildedge run --integrations openai -- python app/run_agents.py
