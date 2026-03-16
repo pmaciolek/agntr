@@ -1,6 +1,5 @@
 procs:
   web:
-    cmd: uvicorn app.main:app --reload
-
+    cmd: ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
   agents:
-    cmd: wildedge run --integrations openai -- python app/run_agents.py
+    cmd: ["uv", "run", "wildedge", "run", "--integrations", "openai", "--", "python", "app/run_agents.py"]
