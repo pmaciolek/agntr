@@ -53,7 +53,7 @@ uv run python app/run_agents.py
 If you want to monitor the agent instances with [WildEdge](https://github.com/wildedge/wildedge-python), prefix the command with `wildedge run`:
 ```bash
 export WILDEDGE_DSN="https://<secret>@ingest.wildedge.dev/<key>"
-uv run wildedge run -- python app/run_agents.py
+wildedge run --integrations openai -- python app/run_agents.py
 ```
 
 ## Adding New Agents
