@@ -22,7 +22,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "redis", specifier = ">=7.3.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.41.0" },
-    { name = "wildedge-sdk", directory = "../wildedge-python" },
+    { name = "wildedge-sdk" },
 ]
 
 [[package]]
@@ -570,15 +570,8 @@ wheels = [
 [[package]]
 name = "wildedge-sdk"
 version = "0.1.0"
-source = { directory = "../wildedge-python" }
-
-[package.metadata]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "coverage" },
-    { name = "pytest", specifier = ">=9.0.2" },
-    { name = "pytest-mock", specifier = ">=3.15.1" },
-    { name = "ruff", specifier = ">=0.15.4" },
-    { name = "tox" },
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/5b/1b97e54054aa3c8e2335b3516f5759505cbd579f7c49cc16c58da92c272d/wildedge_sdk-0.1.0.tar.gz", hash = "sha256:8e5fd7318927e4648e90830a5c7cd07fe6551bfa04935f776616b410e8d9ab2a", size = 232564, upload-time = "2026-03-17T12:13:16.5Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ab/48/150d7bd10326b8cf56be760eb5855996105b63e953d966f4ee98b1f7e21b/wildedge_sdk-0.1.0-py3-none-any.whl", hash = "sha256:60ba378d145202dd00f597a54354980b61707a0aa23f390151d7f5282b37baf1", size = 98116, upload-time = "2026-03-17T12:13:14.606Z" },
 ]
