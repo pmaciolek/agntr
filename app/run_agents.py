@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+import uuid
 
 # Ensure the root directory is in the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -11,10 +12,11 @@ async def main():
     if not os.getenv("OPENROUTER_API_KEY"):
         print("ERROR: Please set OPENROUTER_API_KEY environment variable.")
         return
-        
-    bob = RedisOpenRouterAgent(name="Bob", markdown_path="agents/bob.md")
-    alice = RedisOpenRouterAgent(name="Alice", markdown_path="agents/alice.md")
-    coordinator = CoordinatorAgent(name="Coordinator", markdown_path="agents/coordinator.md")
+
+    conversation_id = str(uuid.uuid4())
+    bob = RedisOpenRouterAgent(name="Bob", markdown_path="agents/bob.md", run_id=str(uuid.uuid4()), conversation_id=conversation_id)
+    alice = RedisOpenRouterAgent(name="Alice", markdown_path="agents/alice.md", run_id=str(uuid.uuid4()), conversation_id=conversation_id)
+    coordinator = CoordinatorAgent(name="Coordinator", markdown_path="agents/coordinator.md", run_id=str(uuid.uuid4()), conversation_id=conversation_id)
 
     # Start all agents concurrently
     task_bob = asyncio.create_task(bob.start())
