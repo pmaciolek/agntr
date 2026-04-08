@@ -4,16 +4,23 @@ import os
 import json
 import redis.asyncio as redis
 from openai import AsyncOpenAI
+import wildedge
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+we = wildedge.init(integrations="openai")
+
+
 class RedisOpenRouterAgent:
-    def __init__(self, name: str, markdown_path: str, model: str = "qwen/qwen3.5-flash-02-23"):
+    def __init__(self, name: str, markdown_path: str, model: str = "qwen/qwen3.5-flash-02-23", run_id: str | None = None, conversation_id: str | None = None):
         self.name = name
         self.channel_name = f"agent:{self.name}"
         self.global_channel = "global_chat"
         self.model = model
+        self.step_index = 0
+        self.run_id = run_id
+        self.conversation_id = conversation_id
         
         # Load persona and instructions from markdown file
         with open(markdown_path, 'r', encoding='utf-8') as f:
@@ -42,20 +49,21 @@ class RedisOpenRouterAgent:
     async def start(self):
         await self.connect()
         try:
-            async for message in self.pubsub.listen():
-                if message["type"] == "message":
-                    channel = message["channel"]
-                    data = message["data"]
-                    
-                    if data == "STOP_SYSTEM":
-                        logger.info(f"Agent {self.name} received STOP command. Exiting.")
-                        break
+            with we.trace(run_id=self.run_id, agent_id=self.name, conversation_id=self.conversation_id):
+                async for message in self.pubsub.listen():
+                    if message["type"] == "message":
+                        channel = message["channel"]
+                        data = message["data"]
 
-                    # Avoid processing own messages or basic coordination flags if we prefix them
-                    if data.startswith(f"[{self.name}]"):
-                        continue
-                        
-                    await self.process_message(channel, data)
+                        if data == "STOP_SYSTEM":
+                            logger.info(f"Agent {self.name} received STOP command. Exiting.")
+                            break
+
+                        # Avoid processing own messages or basic coordination flags if we prefix them
+                        if data.startswith(f"[{self.name}]"):
+                            continue
+
+                        await self.process_message(channel, data)
         finally:
             if self.pubsub:
                 await self.pubsub.close()
@@ -67,30 +75,38 @@ class RedisOpenRouterAgent:
         
         self.history.append({"role": "user", "content": message})
         
-        try:
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=self.history
-            )
-            reply = response.choices[0].message.content
-            
-            logger.info(f"Agent {self.name} responding: {reply}")
-            
-            self.history.append({"role": "assistant", "content": reply})
-            
-            if "STOP_SYSTEM" in reply:
-                logger.info("STOP_SYSTEM triggered by agent.")
-                await self.redis.rpush("chat_history", "[System] Simulation STOP_SYSTEM triggered.")
-                await self.redis.publish(self.global_channel, "STOP_SYSTEM")
-            else:
-                formatted_reply = f"[{self.name}] {reply}"
-                # Save to history list
-                await self.redis.rpush("chat_history", formatted_reply)
-                # Publish to pubsub
-                await self.redis.publish(self.global_channel, formatted_reply)
-                
-        except Exception as e:
-            logger.error(f"Agent {self.name} error generating response: {e}")
+        self.step_index += 1
+        async with we.span(
+            kind="agent_step",
+            name="respond",
+            step_index=self.step_index,
+            input_summary=message[:200],
+        ) as span:
+            try:
+                response = await self.client.chat.completions.create(
+                    model=self.model,
+                    messages=self.history,
+                    max_tokens=512,
+                )
+                span.output_summary = response.choices[0].message.content[:200]
+                reply = response.choices[0].message.content
+
+                logger.info(f"Agent {self.name} responding: {reply}")
+
+                self.history.append({"role": "assistant", "content": reply})
+
+                if "STOP_SYSTEM" in reply:
+                    logger.info("STOP_SYSTEM triggered by agent.")
+                    await self.redis.rpush("chat_history", "[System] Simulation STOP_SYSTEM triggered.")
+                    await self.redis.publish(self.global_channel, "STOP_SYSTEM")
+                else:
+                    formatted_reply = f"[{self.name}] {reply}"
+                    await self.redis.rpush("chat_history", formatted_reply)
+                    await self.redis.publish(self.global_channel, formatted_reply)
+
+            except Exception as e:
+                span.success = False
+                logger.error(f"Agent {self.name} error generating response: {e}")
 
 class CoordinatorAgent(RedisOpenRouterAgent):
     async def start_conversation(self, initial_message: str):

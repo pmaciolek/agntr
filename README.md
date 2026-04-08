@@ -50,10 +50,10 @@ uv run python app/run_agents.py
 ```
 
 #### Run with WildEdge Instrumentation (Optional)
-If you want to monitor the agent instances with [WildEdge](https://github.com/wild-edge/wildedge-python), prefix the command with `wildedge run`:
+If you want to monitor the agent instances with [WildEdge](https://github.com/wild-edge/wildedge-python), set `WILDEDGE_DSN` and run normally. The app initializes the SDK and patches the OpenAI client automatically. If `WILDEDGE_DSN` is not set, the SDK logs a warning and runs as a no-op.
 ```bash
 export WILDEDGE_DSN="https://<secret>@ingest.wildedge.dev/<key>"
-uv run wildedge run --integrations openai -- python app/run_agents.py
+uv run python app/run_agents.py
 ```
 
 ## Adding New Agents
